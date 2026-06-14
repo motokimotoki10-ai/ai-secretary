@@ -222,6 +222,9 @@ def load_settings():
     }
     if merged_settings.get("design_theme") not in {theme["id"] for theme in DESIGN_THEMES}:
         merged_settings["design_theme"] = DEFAULT_SETTINGS["design_theme"]
+    env_license_key = os.environ.get("AI_SECRETARY_LICENSE_KEY", "").strip()
+    if env_license_key:
+        merged_settings["license_key"] = env_license_key
     return merged_settings
 
 
