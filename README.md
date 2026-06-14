@@ -471,7 +471,13 @@ Renderでは以下の設定を使います。
 
 ```text
 Build Command: pip install -r requirements-web.txt
-Start Command: gunicorn app:app
+Start Command: python -m gunicorn app:app --bind 0.0.0.0:$PORT
+```
+
+Renderで `Exited with status 127` が出る場合も、Start Command は以下にします。
+
+```text
+python -m gunicorn app:app --bind 0.0.0.0:$PORT
 ```
 
 Environment Variables に以下を設定します。

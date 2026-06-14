@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r requirements-web.txt
-    startCommand: gunicorn app:app
+    startCommand: python -m gunicorn app:app --bind 0.0.0.0:$PORT
     envVars:
       - key: AI_SECRETARY_SECRET_KEY
         generateValue: true

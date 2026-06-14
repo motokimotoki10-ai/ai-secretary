@@ -1,4 +1,5 @@
 Flask>=3.1,<4
+gunicorn>=22,<24
 openai-whisper
 imageio-ffmpeg
 pytesseract

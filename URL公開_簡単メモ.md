@@ -24,7 +24,7 @@ pip install -r requirements-web.txt
 5. Start Command に以下を入れます。
 
 ```text
-gunicorn app:app
+python -m gunicorn app:app --bind 0.0.0.0:$PORT
 ```
 
 6. Environment Variables に以下を入れます。
