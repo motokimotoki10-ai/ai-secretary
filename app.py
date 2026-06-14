@@ -145,6 +145,14 @@ app.secret_key = os.environ.get("AI_SECRETARY_SECRET_KEY", "ai-secretary-local-d
 whisper_model = None
 
 
+PUBLIC_ENDPOINTS = {
+    "static",
+    "license_status",
+    "verify_license",
+    "apple_touch_icon",
+}
+
+
 AUDIO_EXTENSION_BY_MIME = {
     "audio/webm": ".webm",
     "audio/mp4": ".m4a",
@@ -228,6 +236,24 @@ def get_current_character(settings):
         if character.get("id") == current_id:
             return character
     return DEFAULT_SETTINGS["characters"][0]
+
+
+def is_license_approved():
+    return session.get("license_approved") is True
+
+
+@app.before_request
+def require_license():
+    if request.endpoint in PUBLIC_ENDPOINTS:
+        return None
+
+    if is_license_approved():
+        return None
+
+    if request.method != "GET":
+        return jsonify({"ok": False, "message": "利用キーの確認が必要です。"}), 401
+
+    return render_template("license_only.html", settings=load_settings()), 401
 
 
 def get_google_oauth_flow(state=None):
@@ -2497,9 +2523,16 @@ def verify_license():
     license_key = str(load_settings().get("license_key", "")).strip()
 
     if input_key and input_key == license_key:
+        session["license_approved"] = True
         return jsonify({"ok": True, "message": "利用できます。"})
 
+    session.pop("license_approved", None)
     return jsonify({"ok": False, "message": "利用キーが正しくありません"}), 403
+
+
+@app.get("/license/status")
+def license_status():
+    return jsonify({"ok": is_license_approved()})
 
 
 @app.route("/", methods=["GET", "POST"])
