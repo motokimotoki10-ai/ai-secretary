@@ -1,0 +1,25 @@
+<section id="scheduleListSection" class="schedule-list-section">
+  <h2>予定一覧</h2>
+  <div id="scheduleList" class="schedule-list">
+    {% if schedules %}
+      {% for schedule in schedules %}
+      <article id="schedule-{{ schedule.id }}" class="schedule-card" data-schedule-id="{{ schedule.id }}">
+        <div>
+          <strong>{{ schedule.title }}</strong>
+          <p>{{ schedule.scheduled_at }}</p>
+        </div>
+        <form method="post" action="{{ url_for('register_schedule_google_calendar_action', schedule_id=schedule.id) }}" class="google-calendar-register-form">
+          <button type="submit" class="google-calendar-register-button">
+            外部予定表へ登録
+          </button>
+        </form>
+        <form method="post" action="{{ url_for('delete_schedule_action', schedule_id=schedule.id) }}">
+          <button type="submit" class="task-action delete-action">削除</button>
+        </form>
+      </article>
+      {% endfor %}
+    {% else %}
+      <p id="scheduleEmptyMessage" class="empty">保存済み予定はありません。</p>
+    {% endif %}
+  </div>
+</section>

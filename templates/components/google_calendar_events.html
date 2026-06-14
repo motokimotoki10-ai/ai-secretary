@@ -1,0 +1,21 @@
+<section class="google-calendar-events-section">
+  <h2>外部予定表の予定（任意表示）</h2>
+  {% if google_calendar_events %}
+  <div class="google-calendar-event-list">
+    {% for event in google_calendar_events %}
+    <article class="google-calendar-event-card">
+      <strong>{{ event.title }}</strong>
+      <p>{{ event.start }}</p>
+      {% if event.link %}
+      <a href="{{ event.link }}" target="_blank" rel="noopener">予定表で開く</a>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="google-calendar-message" aria-live="polite">{{ google_calendar_events_message }}</p>
+  {% endif %}
+  <p class="google-calendar-note">
+    外部予定表を設定した場合だけ表示します。AI秘書への保存はまだ行いません。
+  </p>
+</section>

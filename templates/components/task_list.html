@@ -1,0 +1,32 @@
+<section{% if section_id %} id="{{ section_id }}"{% endif %} class="{{ section_class }}">
+  <h2>{{ section_title }}</h2>
+  {% if task_items %}
+  <div class="task-list">
+    {% for task in task_items %}
+    <article class="task-card priority-{{ task.priority }}">
+      <div class="task-head">
+        <span class="priority">{{ task.priority }}</span>
+        <span class="status">{{ task.status }}</span>
+      </div>
+      <h3>{{ task.title }}</h3>
+      <p>期限：{{ task.deadline if task.deadline else "未設定" }}</p>
+      {% if show_task_meta %}
+      <p class="meta">ID：{{ task.id }} / 作成：{{ task.created_at }}</p>
+      <div class="task-actions">
+        {% if task.status != "完了" %}
+        <form method="post" action="{{ url_for('complete_task_action', task_id=task.id) }}">
+          <button type="submit" class="task-action complete-action">完了</button>
+        </form>
+        {% endif %}
+        <form method="post" action="{{ url_for('delete_task_action', task_id=task.id) }}">
+          <button type="submit" class="task-action delete-action">削除</button>
+        </form>
+      </div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% elif empty_message %}
+  <p class="empty">{{ empty_message }}</p>
+  {% endif %}
+</section>

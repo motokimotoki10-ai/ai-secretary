@@ -1,0 +1,28 @@
+{% if deadline_notifications.count %}
+<section class="deadline-notification-section">
+  <div class="deadline-notification-head">
+    <h2>🔔 期限通知（{{ deadline_notifications.count }}件）</h2>
+  </div>
+
+  <div class="deadline-notification-groups">
+    {% for group in deadline_notifications.groups %}
+      {% if group.count %}
+      <div class="deadline-notification-group">
+        <h3>{{ group.label }}</h3>
+        <ul>
+          {% for task in group.tasks %}
+          <li class="deadline-notification-item priority-{{ task.priority }}">
+            <div>
+              <strong>{{ task.title }}</strong>
+              <span>期限：{{ task.deadline }}</span>
+            </div>
+            <span class="priority">{{ task.priority }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

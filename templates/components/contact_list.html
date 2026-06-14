@@ -1,0 +1,53 @@
+<section id="contactListSection" class="contact-list-section">
+  <h2>連絡先一覧</h2>
+  <div class="contact-search">
+    <label for="contactSearchInput">連絡先検索</label>
+    <div class="contact-search-row">
+      <input
+        type="search"
+        id="contactSearchInput"
+        placeholder="名前・会社名・電話番号・メールで検索"
+        autocomplete="off"
+      >
+      <button type="button" id="contactSearchClearButton" class="contact-search-clear">クリア</button>
+    </div>
+    <p id="contactSearchResultCount" class="contact-search-count">
+      検索結果：{{ contacts|length }}件
+    </p>
+  </div>
+  <div id="contactList" class="contact-list">
+    {% if contacts %}
+      {% for contact in contacts %}
+      <article
+        class="contact-card"
+        data-contact-id="{{ contact.id }}"
+        data-contact-search="{{ [contact.name or '', contact.company or '', contact.phone or '', contact.email or '']|join(' ') }}"
+      >
+        <strong>{{ contact.name or "名前未設定" }}</strong>
+        <p>会社：{{ contact.company or "未設定" }}</p>
+        <p>電話：{{ contact.phone or "未設定" }}</p>
+        <p>メール：{{ contact.email or "未設定" }}</p>
+        <p class="contact-date">登録：{{ contact.created_at }}</p>
+        <div class="contact-export-actions">
+          <button type="button" class="contact-export-toggle">連絡帳用に表示</button>
+          <a class="contact-vcf-link" href="{{ url_for('contact_vcf_action', contact_id=contact.id) }}" download>
+            スマホ連絡帳に追加
+          </a>
+        </div>
+        <div class="contact-export-box" hidden>
+          <h3>連絡帳用表示</h3>
+          <pre>名前：{{ contact.name or "" }}
+会社：{{ contact.company or "" }}
+電話：{{ contact.phone or "" }}
+メール：{{ contact.email or "" }}</pre>
+        </div>
+        <form method="post" action="{{ url_for('delete_contact_action', contact_id=contact.id) }}">
+          <button type="submit" class="task-action delete-action">削除</button>
+        </form>
+      </article>
+      {% endfor %}
+    {% else %}
+      <p id="contactEmptyMessage" class="empty">保存済み連絡先はありません。</p>
+    {% endif %}
+  </div>
+</section>

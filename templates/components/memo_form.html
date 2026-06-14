@@ -1,0 +1,16 @@
+<section class="input-section">
+  <form method="post" class="memo-form">
+    <label for="source_text">メモ入力</label>
+    <textarea
+      id="source_text"
+      name="source_text"
+      rows="7"
+      placeholder="例：来週までに提案書作らないとな。A社へ連絡必要。Bot修正したい"
+      required
+    >{{ source_text }}</textarea>
+
+    <div class="form-actions">
+      <button type="submit" class="primary-action">整理する</button>
+    </div>
+  </form>
+</section>

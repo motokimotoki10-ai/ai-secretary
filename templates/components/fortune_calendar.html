@@ -1,0 +1,37 @@
+<section class="fortune-section">
+  <h2>🌸 今日の運気</h2>
+  <div class="fortune-today">
+    <p class="fortune-date">{{ fortune_calendar.today.date }}</p>
+    <strong>{{ fortune_calendar.today.rokuyo }}</strong>
+    {% if fortune_calendar.today.lucky_days %}
+    <div class="fortune-tags">
+      {% for lucky_day in fortune_calendar.today.lucky_days %}
+      <span>{{ lucky_day }}</span>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty">特別な吉日はありません。</p>
+    {% endif %}
+    <p>{{ fortune_calendar.today.description }}</p>
+  </div>
+
+  <button type="button" id="fortuneMonthButton" class="fortune-month-button">
+    今月の運気一覧
+  </button>
+
+  <div id="fortuneMonthList" class="fortune-month-list" hidden>
+    {% if fortune_calendar.month_days %}
+      {% for day in fortune_calendar.month_days %}
+      <article class="fortune-month-card">
+        <strong>{{ day.month_day }}</strong>
+        <p>{{ day.rokuyo }}</p>
+        {% if day.lucky_days %}
+        <p>{{ day.lucky_days|join(" / ") }}</p>
+        {% endif %}
+      </article>
+      {% endfor %}
+    {% else %}
+      <p class="empty">今月の運気一覧はありません。</p>
+    {% endif %}
+  </div>
+</section>

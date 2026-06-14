@@ -1,0 +1,240 @@
+<main id="homeTop" class="app-shell" data-initial-tab="{{ initial_tab|default('home') }}">
+  <section class="app-tab-panel home-lux-panel is-active" data-tab-panel="home" aria-label="ホーム">
+    <div class="lux-hero-block">
+      <div class="lux-hero-text">
+        <h1 class="lux-hero-name">{{ current_datetime.greeting }}</h1>
+        <p class="lux-hero-date">{{ current_datetime.date }}</p>
+        <p class="lux-hero-sub">{{ current_datetime.message }}</p>
+      </div>
+
+      <div class="lux-hero-char-wrap">
+        <div class="secretary-character-frame lux-char-frame">
+          <img
+            src="{{ url_for('static', filename='secretary_character.png') }}"
+            alt="AI秘書キャラ"
+            class="secretary-character-image lux-char-img"
+            onerror="this.hidden = true; this.parentElement.classList.add('is-placeholder');"
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="lux-brief-card">
+      <div class="lux-brief-left">
+        <p class="lux-brief-eyebrow">今日の最重要タスク</p>
+        {% if upcoming_schedules %}
+          <p class="lux-brief-title">{{ upcoming_schedules[0].title }}</p>
+          <p class="lux-brief-time">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {{ upcoming_schedules[0].date_str if upcoming_schedules[0].date_str is defined else current_datetime.time }}
+          </p>
+        {% else %}
+          <p class="lux-brief-title">本日の予定は{{ upcoming_schedules|length }}件です</p>
+          <p class="lux-brief-time">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {{ current_datetime.time }}
+          </p>
+        {% endif %}
+      </div>
+      <div class="lux-brief-right" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+
+    <div class="lux-mic-section">
+      <button
+        type="button"
+        id="homeVoiceButton"
+        class="lux-mic-fab"
+        aria-label="AI秘書に話しかける"
+        aria-expanded="false"
+        aria-controls="homeVoicePanel"
+      >
+        <span class="lux-mic-ring lux-mic-ring-1" aria-hidden="true"></span>
+        <span class="lux-mic-ring lux-mic-ring-2" aria-hidden="true"></span>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
+      <p class="lux-mic-label">話しかける</p>
+      <p class="lux-mic-sub">タップで音声入力・長押しで録音</p>
+    </div>
+
+    <section id="homeVoicePanel" class="home-voice-panel secretary-request-panel" aria-label="AI秘書への依頼" hidden>
+      <div class="home-voice-head">
+        <div>
+          <span>AI秘書</span>
+        <strong>短く押すと音声入力、長押しで録音します</strong>
+        </div>
+        <button type="button" id="homeVoiceCloseButton" class="home-voice-close" aria-label="閉じる">×</button>
+      </div>
+      <p id="homeVoiceStatus" class="home-voice-status" aria-live="polite">
+        マイクを確認しています。
+      </p>
+      <div id="homeVoiceListening" class="home-voice-listening" hidden>
+        <span aria-hidden="true"></span>
+        <strong>聞き取り中です</strong>
+        <p>そのまま話してください。</p>
+      </div>
+      <div id="homeVoiceTranscript" class="home-voice-answer" hidden>
+        <strong>聞き取った内容</strong>
+        <p></p>
+      </div>
+      <button type="button" id="homeVoiceHomeButton" class="home-voice-home-button">
+        ホームへ戻る
+      </button>
+      <div id="homeVoiceFallback" class="home-voice-fallback" hidden>
+        <label for="homeVoiceTextInput">文字で依頼する</label>
+        <textarea
+          id="homeVoiceTextInput"
+          class="home-voice-text"
+          placeholder="例：明日14時に歯医者&#10;例：今日の昼は1200円&#10;例：買い物を忘れないように"
+        ></textarea>
+        <div class="home-voice-actions">
+          <button type="button" id="homeVoiceTextSubmit" class="home-voice-primary">秘書に整理してもらう</button>
+          <button type="button" id="homeVoiceRetryButton" class="home-voice-secondary">もう一度話す</button>
+        </div>
+        <div class="home-voice-help">
+          <strong>音声が使えない時の確認</strong>
+          <ul>
+            <li>Safariで開いているか確認します。</li>
+            <li>マイク許可が出たら「許可」を押します。</li>
+            <li>iPhoneの設定で Safari のマイクを許可します。</li>
+            <li>長押し録音は、指を離すと保存と文字起こしを始めます。</li>
+            <li>ホーム画面追加版で反応しない時は、Safariで開いて試します。</li>
+          </ul>
+        </div>
+      </div>
+      <div id="homeVoiceResult" class="home-voice-result" aria-live="polite"></div>
+    </section>
+
+    <section class="dashboard-grid home-action-grid lux-action-grid" aria-label="主要アクション">
+      <a class="dashboard-card home-action-button action-schedule lux-action-btn" href="{{ url_for('feature_page', feature_key='call-memo') }}">
+        <span class="lux-icon-ring action-schedule-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.61a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6.27 6.27l1.29-1.29a2 2 0 0 1 2.11-.45c.84.3 1.71.51 2.61.63A2 2 0 0 1 22 16.92z"/></svg>
+        </span>
+        <span class="action-text">
+          <span>通話</span>
+          <strong>メモする</strong>
+          <small>電話を文字に</small>
+        </span>
+      </a>
+
+      <a class="dashboard-card home-action-button action-talk lux-action-btn" href="{{ url_for('feature_page', feature_key='conversation') }}">
+        <span class="lux-icon-ring action-talk-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+        </span>
+        <span class="action-text">
+          <span>会話</span>
+          <strong>相談する</strong>
+          <small>相談・整理・要約</small>
+        </span>
+      </a>
+
+      <a class="dashboard-card home-action-button action-money lux-action-btn" href="{{ url_for('feature_page', feature_key='expense') }}">
+        <span class="lux-icon-ring action-money-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </span>
+        <span class="action-text">
+          <span>お金</span>
+          <strong>記録する</strong>
+          <small>{{ "{:,}".format(money_summary.balance) }}円</small>
+        </span>
+      </a>
+
+      <a class="dashboard-card home-action-button action-settings lux-action-btn" href="{{ url_for('feature_page', feature_key='conversation') }}#businessCardSection">
+        <span class="lux-icon-ring action-settings-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </span>
+        <span class="action-text">
+          <span>名刺</span>
+          <strong>登録する</strong>
+          <small>写真から連絡先へ</small>
+        </span>
+      </a>
+    </section>
+
+    <section class="home-insight-row lux-insight-row" aria-label="今日の情報">
+      <article class="home-insight-card home-fortune-card">
+        <span>縁起カレンダー</span>
+        <strong>
+          {{ fortune_calendar.today.rokuyo }}
+          {% if fortune_calendar.today.lucky_days %}
+            ・{{ fortune_calendar.today.lucky_days|join(" / ") }}
+          {% endif %}
+        </strong>
+        <small>{{ fortune_calendar.today.description }}</small>
+      </article>
+      <article class="home-insight-card">
+        <span>今月の縁起日</span>
+        <strong>{{ fortune_calendar.month_days|length }}日</strong>
+        <small>大安・吉日を確認できます</small>
+      </article>
+    </section>
+  </section>
+
+  <section class="app-tab-panel" data-tab-panel="schedule" aria-label="予定">
+    <div class="tab-panel-head">
+      <p class="eyebrow">予定</p>
+      <h2>予定</h2>
+      <p>何日に何があるかを、カレンダーで確認できます。</p>
+    </div>
+    {% include "components/schedule_calendar.html" %}
+    <section class="dashboard-grid compact-dashboard" aria-label="予定メニュー">
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='schedule-list') }}"><span>予定一覧</span><strong>{{ upcoming_schedules|length }}件</strong><small>近い予定を見る</small></a>
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='schedule-add') }}"><span>予定追加</span><strong>整える</strong><small>メモから作成</small></a>
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='alerts') }}"><span>通知・アラーム</span><strong>{{ due_alert_tasks|length }}件</strong><small>期限を見守る</small></a>
+    </section>
+  </section>
+
+  <section class="app-tab-panel" data-tab-panel="talk" aria-label="会話">
+    <div class="tab-panel-head">
+      <p class="eyebrow">会話</p>
+      <h2>会話</h2>
+      <p>相談、メモ整理、音声、写真、名刺管理をまとめます。</p>
+    </div>
+    <section class="dashboard-grid compact-dashboard" aria-label="会話メニュー">
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='conversation') }}"><span>会話整理</span><strong>整える</strong><small>相談・要約・名刺</small></a>
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='call-memo') }}"><span>通話メモ</span><strong>電話</strong><small>スピーカー通話を文字に</small></a>
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='recording') }}"><span>音声メモ</span><strong>任意</strong><small>録音またはファイル選択</small></a>
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='transcripts') }}"><span>文字起こし履歴</span><strong>{{ transcript_count }}件</strong><small>会話を見返す</small></a>
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='conversation') }}#cameraSection"><span>写真を撮る</span><strong>カメラ</strong><small>画像を確認</small></a>
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='conversation') }}#businessCardSection"><span>名刺登録</span><strong>読み取り</strong><small>連絡先候補を作成</small></a>
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='conversation') }}#contactListSection"><span>連絡先一覧</span><strong>{{ contacts|length }}件</strong><small>保存済み名刺</small></a>
+    </section>
+  </section>
+
+  <section class="app-tab-panel" data-tab-panel="money" aria-label="お金">
+    <div class="tab-panel-head">
+      <p class="eyebrow">お金</p>
+      <h2>お金</h2>
+      <p>日々のお金の流れを、短時間で記録できます。</p>
+    </div>
+    <section class="dashboard-grid money-dashboard" aria-label="お金メニュー">
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='expense') }}"><span>支出登録</span><strong>使ったお金</strong><small>支払いを記録</small></a>
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='income') }}"><span>収入登録</span><strong>入ったお金</strong><small>収入を記録</small></a>
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='month-summary') }}"><span>今月集計</span><strong>{{ "{:,}".format(money_summary.balance) }}円</strong><small>差額を見る</small></a>
+    </section>
+  </section>
+
+  <section id="settingsSection" class="app-tab-panel" data-tab-panel="settings" aria-label="設定">
+    <div class="tab-panel-head">
+      <p class="eyebrow">設定</p>
+      <h2>設定</h2>
+      <p>初めての方はガイドから。見た目や連携は必要な時だけ調整できます。</p>
+    </div>
+    <section class="dashboard-grid settings-dashboard" aria-label="設定メニュー">
+      <a class="dashboard-card" href="{{ url_for('welcome_guide') }}"><span>はじめての方へ</span><strong>ガイド</strong><small>使い方を確認</small></a>
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='design-settings') }}"><span>見た目と使いやすさ</span><strong>調整</strong><small>テーマ・文字・ホーム追加</small></a>
+      <a class="dashboard-card" href="{{ url_for('app_info') }}"><span>このアプリについて</span><strong>確認</strong><small>特徴と状態</small></a>
+      <a class="dashboard-card" href="{{ url_for('update_history') }}"><span>改善の記録</span><strong>見る</strong><small>更新履歴</small></a>
+      <a class="dashboard-card" href="{{ url_for('future_features') }}"><span>これからの予定</span><strong>確認</strong><small>今後の機能</small></a>
+      <a class="dashboard-card" href="{{ url_for('feature_page', feature_key='integration-settings') }}"><span>任意連携</span><strong>開く</strong><small>予定表・高度なAI</small></a>
+    </section>
+  </section>
+
+  <div class="saved-spacer"></div>
+</main>

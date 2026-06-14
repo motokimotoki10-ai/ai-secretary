@@ -1,0 +1,21 @@
+<section class="transcript-list-section">
+  <h2>会話履歴（{{ transcript_count }}件）</h2>
+  <div class="transcript-list">
+    {% if transcripts %}
+      {% for transcript in transcripts %}
+      <article class="transcript-card">
+        <p class="transcript-date">{{ transcript.created_at }}</p>
+        <p class="transcript-content">{{ transcript.content }}</p>
+        <button type="button" class="task-action summary-action transcript-summary-button" data-summary-text="{{ transcript.content }}">
+          要約する
+        </button>
+        <form method="post" action="{{ url_for('delete_transcript_action', transcript_id=transcript.id) }}">
+          <button type="submit" class="task-action delete-action">削除</button>
+        </form>
+      </article>
+      {% endfor %}
+    {% else %}
+      <p class="empty">保存済み会話履歴はありません。</p>
+    {% endif %}
+  </div>
+</section>

@@ -1,0 +1,38 @@
+# Local runtime data
+secretary.db
+settings.json
+uploads/
+_runtime/
+
+# Secrets and external service tokens
+.env
+.env.*
+google_client_secret.json
+google_calendar_token.json
+*token*.json
+*secret*.json
+
+# Logs
+*.log
+*.err.log
+*.out.log
+server.err.log
+server.out.log
+flask_start.err.log
+flask_start.log
+start_check.err.log
+start_check.out.log
+
+# Python cache and local environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

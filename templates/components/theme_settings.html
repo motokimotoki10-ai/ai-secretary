@@ -1,0 +1,22 @@
+<section class="theme-settings-section" aria-label="テーマ設定">
+  <h2>テーマを選ぶ</h2>
+  <p>贈る相手や使う場面に合わせて、AI秘書の雰囲気を選べます。</p>
+  <form method="post" action="{{ url_for('save_design_theme_action') }}" class="theme-settings-form">
+    <div class="theme-option-grid">
+      {% for theme in design_themes %}
+      <label class="theme-option-card theme-preview-{{ theme.id }}">
+        <input
+          type="radio"
+          name="design_theme"
+          value="{{ theme.id }}"
+          {% if settings.design_theme == theme.id %}checked{% endif %}
+        >
+        <span class="theme-preview-dot"></span>
+        <strong>{{ theme.name }}</strong>
+        <small>{{ theme.description }}</small>
+      </label>
+      {% endfor %}
+    </div>
+    <button type="submit" class="theme-save-button">この雰囲気にする</button>
+  </form>
+</section>

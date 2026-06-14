@@ -1,0 +1,106 @@
+<section id="recordingSection" class="recording-section">
+  {% set is_call_memo = feature_key is defined and feature_key == "call-memo" %}
+  {% if is_call_memo %}
+  <h2>通話メモ</h2>
+  <div class="call-memo-guide">
+    <strong>スピーカー通話を記録する流れ</strong>
+    <ol>
+      <li>相手に録音することを伝えます</li>
+      <li>電話をスピーカーにして、この画面を開いたままにします</li>
+      <li>「録音開始」を押して、通話後に「録音停止」を押します</li>
+      <li>保存後に「会話を文字にする」を押します</li>
+    </ol>
+    <p>スマホ側で直接録音できない時は、ボイスメモなどで録音した音声ファイルを選ぶ方法も使えます。</p>
+  </div>
+  {% else %}
+  <h2>音声メモ</h2>
+  <div class="recording-guide">
+    <strong>音声で残したい時だけ使います</strong>
+    <ol>
+      <li>直接録音できる場合は「録音開始」を押します</li>
+      <li>難しい場合は「録音ファイルを選ぶ」を使います</li>
+      <li>保存後に会話を文字にできます</li>
+      <li>必要なら要約や予定化もできます</li>
+    </ol>
+    <p class="recording-guide-note">
+      予定追加、メモ、お金の記録は各入力画面から直接できます。ここは音声を使いたい時の補助画面です。
+    </p>
+  </div>
+  {% endif %}
+  <div id="recordingSupportNotice" class="recording-support-notice" hidden></div>
+  <div id="recordingTapNotice" class="recording-tap-notice" aria-live="polite" hidden></div>
+  <div class="recording-actions">
+    <div class="record-step">
+      <button type="button" id="recordStartButton" class="record-action start-recording">
+        録音開始
+      </button>
+      <p>{% if is_call_memo %}通話を始める直前に押します。{% else %}話し始める前に押します。{% endif %}</p>
+    </div>
+    <div class="record-step">
+      <button type="button" id="recordStopButton" class="record-action stop-recording" disabled>
+        録音停止
+      </button>
+      <p>話し終わったら押します。</p>
+    </div>
+  </div>
+  <p class="recording-status-label">状態：</p>
+  <p id="recordingStatus" class="recording-status" aria-live="polite">待機中</p>
+  <audio id="recordingAudio" class="recording-audio" controls hidden></audio>
+  <div class="record-step recording-file-fallback">
+    <label id="recordAudioFileLabel" for="recordAudioFileInput" class="record-action save-recording recording-file-label">
+      録音ファイルを選ぶ
+    </label>
+    <input id="recordAudioFileInput" class="audio-file-input" type="file" accept="audio/*" capture hidden>
+    <p>{% if is_call_memo %}通話を別アプリで録音した場合は、ここから選んで文字起こしできます。{% else %}スマホのボイスメモで録音した音声も、ここから選んで保存できます。{% endif %}</p>
+  </div>
+  <div class="record-step">
+    <button type="button" id="recordSaveButton" class="record-action save-recording" disabled>
+      録音を保存
+    </button>
+    <p>録音停止後に押します。保存すると文字起こしできます。</p>
+  </div>
+  <div class="record-step">
+    <button type="button" id="transcriptionButton" class="record-action transcription-action" disabled>
+      会話を文字にする
+    </button>
+    <p>先に録音を保存してください。保存後に押します。</p>
+  </div>
+  <div class="transcription-result">
+    <h3>文字起こし結果</h3>
+    <textarea
+      id="transcriptionResultText"
+      class="transcription-edit-textarea"
+      placeholder="録音保存後に文字起こしを実行できます。"
+    >録音保存後に文字起こしを実行できます。</textarea>
+    <button type="button" id="transcriptionEditSaveButton" class="record-action transcription-save-action" disabled>
+      修正を保存
+    </button>
+    <p id="transcriptionEditStatus" class="transcription-edit-status" aria-live="polite"></p>
+  </div>
+  <button type="button" id="summaryButton" class="record-action summary-action">
+    要約する
+  </button>
+  <div class="summary-result">
+    <h3>📄 要約結果</h3>
+    <div id="summaryResultText" class="summary-result-text">
+      文字起こし結果または会話履歴を要約できます。
+    </div>
+  </div>
+  <button type="button" id="conversationOrganizeButton" class="record-action organize-conversation-action" disabled>
+    整理する
+  </button>
+  <div class="conversation-result">
+    <h3>整理結果</h3>
+    <div id="conversationResultText" class="conversation-result-text">
+      文字起こし後に会話を整理できます。
+    </div>
+  </div>
+  <button type="button" id="conversationSaveButton" class="record-action save-conversation-action" disabled>
+    保存する
+  </button>
+  <p id="conversationSaveStatus" class="conversation-save-status" aria-live="polite"></p>
+  <button type="button" id="scheduleSaveButton" class="record-action save-schedule-action" disabled>
+    予定として保存
+  </button>
+  <p id="scheduleSaveStatus" class="conversation-save-status" aria-live="polite"></p>
+</section>

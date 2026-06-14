@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#176b5f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AI秘書">
+    <meta name="application-name" content="AI秘書">
+    <meta name="description" content="毎日の予定、会話、連絡先、お金を上品に整えるAI秘書アプリ">
+    <title>ようこそガイド | AI秘書</title>
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}?v=20260614-icon">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}?v=20260614-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}?v=20260614-icon">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icon-192.png') }}?v=20260614-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='license.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='pwa.js') }}" defer></script>
+  </head>
+  <body class="is-locked theme-{{ settings.design_theme|default('dark-secretary') }}">
+    {% include "components/license_gate.html" %}
+    <main class="app-shell welcome-guide-page">
+      <header class="app-header future-hero">
+        <div class="brand-row">
+          <span class="app-logo-frame home-logo-frame">
+            <img src="{{ url_for('static', filename='app_logo.png') }}" alt="AI秘書ロゴ" class="app-logo">
+          </span>
+          <div>
+            <p class="eyebrow">ガイド</p>
+            <h1>ようこそ AI秘書へ</h1>
+          </div>
+        </div>
+        <p class="lead">まずは下のタブから、予定・会話・お金・設定を選ぶだけで使い始められます。</p>
+        <a class="future-back-link" href="{{ url_for('index') }}">ホームへ戻る</a>
+      </header>
+
+      <section class="welcome-section">
+        <div class="future-section-head">
+          <span>はじめに</span>
+          <h2>迷ったらここから</h2>
+        </div>
+        <div class="welcome-card-grid">
+          <article class="welcome-card"><strong>予定を整える</strong><p>予定追加や期限確認は、下部タブの「予定」から始められます。</p></article>
+          <article class="welcome-card"><strong>会話を残す</strong><p>録音、文字起こし、写真、名刺登録は「会話」にまとまっています。</p></article>
+          <article class="welcome-card"><strong>名刺を保存する</strong><p>名刺画像から連絡先候補を作り、保存や検索ができます。</p></article>
+          <article class="welcome-card"><strong>お金を記録する</strong><p>支出と収入を記録し、今月の状況をすぐ確認できます。</p></article>
+          <article class="welcome-card"><strong>見た目を選ぶ</strong><p>「設定」からテーマや文字サイズを好みに合わせられます。</p></article>
+          <article class="welcome-card"><strong>必要な時だけ連携</strong><p>予定表連携や高度なAI機能は、使いたい方だけ後から設定できます。</p></article>
+        </div>
+      </section>
+
+      <section class="welcome-section">
+        <div class="future-section-head">
+          <span>おすすめ</span>
+          <h2>最初の使い方</h2>
+        </div>
+        <ol class="welcome-steps">
+          <li><span>1</span><strong>ホームで今日の予定を確認する</strong></li>
+          <li><span>2</span><strong>予定タブで新しい予定を追加する</strong></li>
+          <li><span>3</span><strong>会話タブで録音や名刺登録を試す</strong></li>
+          <li><span>4</span><strong>設定タブで見た目を整える</strong></li>
+        </ol>
+      </section>
+
+      <section class="welcome-note-section">
+        <h2>補足</h2>
+        <p>外部サービス連携や高度なAI機能は任意です。標準機能だけでも安心して利用できます。</p>
+      </section>
+    </main>
+    <a class="home-return-fab" href="{{ url_for('index') }}" aria-label="ホームへ戻る">ホーム</a>
+  </body>
+</html>

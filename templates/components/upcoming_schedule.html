@@ -1,0 +1,18 @@
+<section class="upcoming-schedule-section">
+  <div class="upcoming-schedule-head">
+    <h2>⏰ 近い予定（{{ upcoming_schedules|length }}件）</h2>
+    <a href="#scheduleListSection">予定一覧へ</a>
+  </div>
+  {% if upcoming_schedules %}
+  <div class="upcoming-schedule-list">
+    {% for schedule in upcoming_schedules %}
+    <article class="upcoming-schedule-card{% if schedule.is_within_24h %} is-urgent{% endif %}">
+      <strong>{{ schedule.title }}</strong>
+      <p>{{ schedule.scheduled_at }}</p>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty">近い予定はありません。</p>
+  {% endif %}
+</section>

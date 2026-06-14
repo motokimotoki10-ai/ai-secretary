@@ -1,0 +1,154 @@
+<section class="schedule-dashboard-section" aria-label="予定カレンダー">
+  <div class="schedule-dashboard-head">
+    <div>
+      <span>予定カレンダー</span>
+      <h2>{{ schedule_dashboard.month_label }}</h2>
+    </div>
+    <a href="{{ url_for('feature_page', feature_key='schedule-add') }}">予定を追加</a>
+  </div>
+
+  <div class="schedule-calendar-nav" aria-label="カレンダー操作">
+    <a href="{{ schedule_calendar_nav.previous_url }}">前月</a>
+    <a href="{{ schedule_calendar_nav.today_url }}">今日へ戻る</a>
+    <a href="{{ schedule_calendar_nav.next_url }}">次月</a>
+  </div>
+
+  <div class="schedule-summary-grid">
+    <article>
+      <span>今日の予定</span>
+      <strong>{{ schedule_dashboard.today_schedules|length }}件</strong>
+    </article>
+    <article>
+      <span>今週の予定</span>
+      <strong>{{ schedule_dashboard.week_schedules|length }}件</strong>
+    </article>
+    <article>
+      <span>今月の予定</span>
+      <strong>{{ schedule_dashboard.month_schedules|length }}件</strong>
+    </article>
+  </div>
+
+  <div class="month-calendar" role="table" aria-label="{{ schedule_dashboard.month_label }}">
+    <div class="calendar-weekday-row" role="row">
+      {% for label in schedule_dashboard.weekday_labels %}
+      <span role="columnheader">{{ label }}</span>
+      {% endfor %}
+    </div>
+    {% for week in schedule_dashboard.weeks %}
+    <div class="calendar-week-row" role="row">
+      {% for day in week %}
+        {% if day %}
+        {% if day.schedules %}
+        <a class="calendar-day{% if day.is_today %} is-today{% endif %} has-schedule{% if day.is_past %} is-past{% endif %}" role="cell" href="#schedule-day-{{ day.date }}">
+          <strong>{{ day.day }}</strong>
+          <span>{{ day.schedules|length }}件</span>
+          <small>{{ day.schedules[0].title }}</small>
+        </a>
+        {% else %}
+        <article class="calendar-day{% if day.is_today %} is-today{% endif %}{% if day.is_past %} is-past{% endif %}" role="cell">
+          <strong>{{ day.day }}</strong>
+        </article>
+        {% endif %}
+        {% else %}
+        <span class="calendar-day is-empty" role="cell" aria-hidden="true"></span>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="schedule-year-section" aria-label="年間カレンダー">
+  <div class="schedule-focus-head">
+    <span>年間</span>
+    <strong>{{ schedule_dashboard.year_label }}の予定</strong>
+  </div>
+  <div class="year-calendar-grid">
+    {% for month in schedule_dashboard.year_months %}
+    <a class="{% if month.is_current %}is-current{% endif %}{% if month.count %} has-schedule{% endif %}" href="{{ url_for('feature_page', feature_key='schedule-list', calendar_month='%04d-%02d'|format(schedule_dashboard.month_value[:4]|int, month.month)) }}">
+      <strong>{{ month.label }}</strong>
+      <span>{{ month.count }}件</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="schedule-focus-section" aria-label="今日と今週の予定">
+  <article class="schedule-focus-card">
+    <div class="schedule-focus-head">
+      <span>今日</span>
+      <strong>本日の予定</strong>
+    </div>
+    {% if schedule_dashboard.today_schedules %}
+      <div class="schedule-mini-list">
+        {% for schedule in schedule_dashboard.today_schedules %}
+        <a href="#schedule-{{ schedule.id }}">
+          <span>{{ schedule.scheduled_at }}</span>
+          <strong>{{ schedule.title }}</strong>
+        </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty">今日の予定はありません。</p>
+    {% endif %}
+  </article>
+
+  <article class="schedule-focus-card">
+    <div class="schedule-focus-head">
+      <span>今週</span>
+      <strong>7日以内の予定</strong>
+    </div>
+    {% if schedule_dashboard.week_schedules %}
+      <div class="schedule-mini-list">
+        {% for schedule in schedule_dashboard.week_schedules %}
+        <a href="#schedule-{{ schedule.id }}">
+          <span>{{ schedule.scheduled_at }}</span>
+          <strong>{{ schedule.title }}</strong>
+        </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty">今週の予定はありません。</p>
+    {% endif %}
+  </article>
+</section>
+
+<section class="schedule-month-list-section" aria-label="月内の予定一覧">
+  <div class="schedule-focus-head">
+    <span>月内</span>
+    <strong>{{ schedule_dashboard.month_label }}の予定一覧</strong>
+  </div>
+  {% if schedule_dashboard.month_groups %}
+  <div class="schedule-month-group-list">
+    {% for group in schedule_dashboard.month_groups %}
+    <article id="schedule-day-{{ group.date }}" class="schedule-month-group{% if group.is_today %} is-today{% endif %}">
+      <h3>{{ group.date_label }}</h3>
+      <div class="schedule-mini-list">
+        {% for schedule in group.schedules %}
+        <a href="#schedule-{{ schedule.id }}">
+          <span>{{ schedule.scheduled_at }}</span>
+          <strong>{{ schedule.title }}</strong>
+        </a>
+        {% endfor %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty">この月の予定はありません。</p>
+  {% endif %}
+</section>
+
+{% if schedule_dashboard.unscheduled %}
+<section class="schedule-unscheduled-section" aria-label="日時未設定の予定">
+  <h2>日時未設定</h2>
+  <div class="schedule-mini-list">
+    {% for schedule in schedule_dashboard.unscheduled %}
+    <a href="#schedule-{{ schedule.id }}">
+      <span>未設定</span>
+      <strong>{{ schedule.title }}</strong>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

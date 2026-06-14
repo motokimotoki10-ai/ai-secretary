@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#176b5f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AI秘書">
+    <meta name="application-name" content="AI秘書">
+    <title>{{ feature_title }} | AI秘書</title>
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}?v=20260614-icon">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}?v=20260614-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}?v=20260614-icon">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icon-192.png') }}?v=20260614-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='voice.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='pwa.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='display_settings.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='camera.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='business_card_ocr.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='recording.js') }}?v=20260614-recording-tap" defer></script>
+    <script src="{{ url_for('static', filename='summary.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='consult.js') }}?v=20260614-route" defer></script>
+    <script src="{{ url_for('static', filename='calculator.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='weather.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='travel.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='google_calendar.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='fortune.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='writer.js') }}" defer></script>
+  </head>
+  <body class="theme-{{ settings.design_theme|default('dark-secretary') }}">
+    <header class="mobile-app-header" aria-label="アプリヘッダー">
+      <span class="app-logo-frame mobile-app-logo-frame">
+        <img src="{{ url_for('static', filename='app_logo.png') }}" alt="AI秘書ロゴ" class="mobile-app-logo">
+      </span>
+      <div>
+        <strong>{{ feature_title }}</strong>
+        <span>AI秘書</span>
+      </div>
+    </header>
+
+    <main class="app-shell feature-shell">
+      <div class="tab-panel-head">
+        <p class="eyebrow">AI秘書</p>
+        <h1>{{ feature_title }}</h1>
+        <p>{{ feature_lead }}</p>
+      </div>
+
+      <a class="feature-back-link" href="{{ url_for('index', active_tab=back_tab) }}">← メニューへ戻る</a>
+
+      {% if feature_key == "schedule-list" %}
+        {% include "components/schedule_calendar.html" %}
+        {% include "components/upcoming_schedule.html" %}
+        {% include "components/schedule_list.html" %}
+        {% set section_class = "saved-section" %}
+        {% set section_id = "todoSection" %}
+        {% set section_title = "保存済みタスク一覧" %}
+        {% set task_items = tasks %}
+        {% set show_task_meta = true %}
+        {% set empty_message = "保存済みタスクはありません。" %}
+        {% include "components/task_list.html" %}
+      {% elif feature_key == "schedule-add" %}
+        {% if saved %}
+        <section class="notice">保存しました。</section>
+        {% endif %}
+        {% if extracted_schedules %}
+        <section class="result-section">
+          <h2>予定として保存しました</h2>
+          <div class="schedule-mini-list">
+            {% for schedule in extracted_schedules %}
+            <a href="{{ url_for('feature_page', feature_key='schedule-list') }}">
+              <span>{{ schedule.scheduled_at }}</span>
+              <strong>{{ schedule.title }}</strong>
+            </a>
+            {% endfor %}
+          </div>
+        </section>
+        {% endif %}
+        {% if extracted_tasks %}
+          {% set section_class = "result-section" %}
+          {% set section_id = "" %}
+          {% set section_title = "整理結果" %}
+          {% set task_items = extracted_tasks %}
+          {% set show_task_meta = false %}
+          {% set empty_message = "" %}
+          {% include "components/task_list.html" %}
+        {% endif %}
+        {% include "components/memo_form.html" %}
+        {% include "components/google_calendar_connect.html" %}
+        {% include "components/google_calendar_events.html" %}
+      {% elif feature_key == "alerts" %}
+        {% include "components/deadline_notifications.html" %}
+        {% if due_alert_tasks %}
+        <section class="due-alert-section">
+          <h2>期限超過・今日までのタスク</h2>
+          <div class="due-alert-list">
+            {% for task in due_alert_tasks %}
+            <article class="due-alert-card priority-{{ task.priority }}">
+              <div>
+                <strong>{{ task.title }}</strong>
+                <p>期限：{{ task.deadline }}</p>
+              </div>
+              <span class="priority">{{ task.priority }}</span>
+            </article>
+            {% endfor %}
+          </div>
+        </section>
+        {% endif %}
+      {% elif feature_key in ["recording", "call-memo"] %}
+        {% include "components/recording_memo.html" %}
+      {% elif feature_key == "transcripts" %}
+        {% include "components/transcript_list.html" %}
+      {% elif feature_key == "conversation" %}
+        <section class="dashboard-grid compact-dashboard feature-jump-grid" aria-label="会話機能メニュー">
+          <a class="dashboard-card" href="#cameraSection"><span>写真を撮る</span><strong>カメラ</strong><small>画像を確認</small></a>
+          <a class="dashboard-card" href="#businessCardSection"><span>名刺登録</span><strong>読み取り</strong><small>連絡先候補を作成</small></a>
+          <a class="dashboard-card" href="#contactListSection"><span>連絡先一覧</span><strong>{{ contacts|length }}件</strong><small>保存済み名刺</small></a>
+        </section>
+        {% include "components/secretary_consult.html" %}
+        {% include "components/recording_memo.html" %}
+        {% include "components/camera_capture.html" %}
+        {% include "components/business_card_ocr.html" %}
+        {% include "components/contact_list.html" %}
+      {% elif feature_key in ["expense", "income", "month-summary"] %}
+        {% include "components/money_manager.html" %}
+        {% if feature_key == "month-summary" %}
+          {% include "components/voice_calculator.html" %}
+        {% endif %}
+      {% elif feature_key == "integration-settings" %}
+        {% include "components/google_calendar_connect.html" %}
+        {% include "components/google_calendar_events.html" %}
+        {% include "components/ai_extension_settings.html" %}
+      {% elif feature_key == "design-settings" %}
+        <section class="dashboard-grid compact-dashboard feature-jump-grid" aria-label="設定の案内">
+          <a class="dashboard-card" href="{{ url_for('welcome_guide') }}"><span>はじめての方へ</span><strong>ガイド</strong><small>使い方を確認</small></a>
+          <a class="dashboard-card" href="{{ url_for('app_info') }}"><span>このアプリについて</span><strong>情報</strong><small>特徴と状態</small></a>
+          <a class="dashboard-card" href="{{ url_for('index', active_tab='settings') }}"><span>設定トップ</span><strong>戻る</strong><small>設定メニューへ</small></a>
+        </section>
+        {% include "components/theme_settings.html" %}
+        <section id="pwaInstallHint" class="pwa-install-hint" aria-label="ホーム画面追加の案内">
+          <strong>スマホのホーム画面に追加できます</strong>
+          <p>スマホのブラウザで開き、共有ボタンから「ホーム画面に追加」を選ぶと、アプリのように起動できます。</p>
+        </section>
+        {% include "components/display_settings.html" %}
+      {% endif %}
+    </main>
+    <a class="home-return-fab" href="{{ url_for('index') }}" aria-label="ホームへ戻る">ホーム</a>
+  </body>
+</html>

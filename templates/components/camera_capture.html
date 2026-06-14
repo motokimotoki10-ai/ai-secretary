@@ -1,0 +1,16 @@
+<section id="cameraSection" class="camera-section">
+  <h2>写真を撮る</h2>
+  <p class="image-input-help">カメラで撮影、またはスマホ内の写真を選べます。</p>
+  <label for="cameraInput" class="camera-action">
+    写真を撮る・選ぶ
+  </label>
+  <input
+    id="cameraInput"
+    class="camera-input"
+    type="file"
+    accept="image/*"
+    capture="environment"
+  >
+  <p id="cameraStatus" class="camera-status">画像はまだ選択されていません。</p>
+  <img id="cameraPreview" class="camera-preview" alt="選択した画像のプレビュー" hidden>
+</section>

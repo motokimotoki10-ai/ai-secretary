@@ -1,0 +1,43 @@
+<section id="googleCalendarSection" class="google-calendar-section">
+  <h2>外部予定表連携（必要な時だけ追加）</h2>
+  <div class="google-calendar-status">
+    <span>現在状態</span>
+    <strong>{{ google_calendar_status.label }}</strong>
+    {% if google_calendar_status.connected %}
+    <p>外部予定表と連携済みです。</p>
+    {% else %}
+    <p>外部予定表との接続は未完了です。</p>
+    {% endif %}
+  </div>
+  <p class="google-calendar-note">
+    外部予定表を設定しなくても、AI秘書の予定管理・やること管理・録音・連絡先・文章作成はそのまま使えます。
+  </p>
+  <div class="google-calendar-actions">
+    <a class="google-calendar-login-link" href="{{ url_for('google_calendar_login') }}">
+      予定表連携を開始
+    </a>
+  </div>
+  {% if google_calendar_message %}
+  <p class="google-calendar-message" aria-live="polite">{{ google_calendar_message }}</p>
+  {% endif %}
+  {% if not google_calendar_status.client_secret_exists %}
+  <div class="google-calendar-setup-alert">
+    <strong>外部予定表はまだ接続されていません</strong>
+    <p>このままでもAI秘書の予定管理は使えます。外部予定表とつなぎたい場合だけ、管理者が設定します。</p>
+  </div>
+  {% endif %}
+  {% if not google_calendar_status.libraries_ready %}
+  <p class="google-calendar-message">{{ google_calendar_status.library_message }}</p>
+  {% endif %}
+  <div class="google-calendar-future">
+    <h3>任意連携でできること</h3>
+    <ul>
+      <li>AI秘書の予定を外部予定表へ登録</li>
+      <li>外部予定表の今後の予定を表示</li>
+      <li>将来的に予定変更の反映や同期を追加予定</li>
+    </ul>
+  </div>
+  <p class="google-calendar-note">
+    プレゼント用の基本機能には含めず、必要な人だけ後から設定する追加機能です。
+  </p>
+</section>

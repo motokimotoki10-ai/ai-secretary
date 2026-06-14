@@ -1,0 +1,25 @@
+<section class="travel-section">
+  <h2>🚅 移動サポート</h2>
+  <div class="travel-form">
+    <label for="travelOriginInput">出発地</label>
+    <input id="travelOriginInput" type="text" placeholder="岡山">
+
+    <label for="travelDestinationInput">目的地</label>
+    <input id="travelDestinationInput" type="text" placeholder="大阪">
+
+    <button type="button" id="travelSearchButton">検索</button>
+  </div>
+
+  <p id="travelStatus" class="travel-status" aria-live="polite"></p>
+
+  <div id="travelResult" class="travel-result" hidden>
+    <h3 id="travelRouteTitle">移動候補</h3>
+    <p id="travelDistanceText" class="travel-distance"></p>
+    <div id="travelOptionList" class="travel-option-list"></div>
+    <div class="travel-recommendation">
+      <h3>おすすめ</h3>
+      <strong id="travelRecommendLabel"></strong>
+      <p id="travelRecommendReason"></p>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,53 @@
+<section id="businessCardSection" class="business-card-section">
+  <h2>名刺読み取り</h2>
+  <p class="image-input-help">
+    名刺を撮影、またはスマホ内の写真を選んで連絡先候補を作れます。読み取り機能が未準備でも、下の欄へ手入力して保存できます。
+  </p>
+  <label for="businessCardInput" class="business-card-action">
+    名刺を撮る・選ぶ
+  </label>
+  <input
+    id="businessCardInput"
+    class="business-card-input"
+    type="file"
+    accept="image/*"
+    capture="environment"
+  >
+  <img id="businessCardPreview" class="business-card-preview" alt="名刺画像のプレビュー" hidden>
+  <button type="button" id="businessCardOcrButton" class="business-card-ocr-button">
+    名刺を読み取る
+  </button>
+  <p id="businessCardOcrStatus" class="business-card-status" aria-live="polite">
+    名刺画像はまだ選択されていません。
+  </p>
+  <div id="businessCardOcrResult" class="business-card-ocr-result" hidden>
+    <h3>読み取り結果</h3>
+    <p>名前：<span id="ocrResultName"></span></p>
+    <p>会社名：<span id="ocrResultCompany"></span></p>
+    <p>電話番号：<span id="ocrResultPhone"></span></p>
+    <p>メール：<span id="ocrResultEmail"></span></p>
+  </div>
+  <div class="contact-candidate-form">
+    <h3>連絡先候補</h3>
+    <label class="contact-field">
+      <span>名前</span>
+      <input id="contactNameInput" type="text" autocomplete="name" placeholder="山田 太郎">
+    </label>
+    <label class="contact-field">
+      <span>会社</span>
+      <input id="contactCompanyInput" type="text" autocomplete="organization" placeholder="株式会社サンプル">
+    </label>
+    <label class="contact-field">
+      <span>電話</span>
+      <input id="contactPhoneInput" type="tel" autocomplete="tel" placeholder="090-0000-0000">
+    </label>
+    <label class="contact-field">
+      <span>メール</span>
+      <input id="contactEmailInput" type="email" autocomplete="email" placeholder="sample@example.com">
+    </label>
+    <button type="button" id="businessCardSaveButton" class="business-card-save-button">
+      連絡先として保存
+    </button>
+    <p id="businessCardSaveStatus" class="business-card-status" aria-live="polite"></p>
+  </div>
+</section>

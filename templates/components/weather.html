@@ -1,0 +1,23 @@
+<section class="weather-section">
+  <h2>☀️ 天気</h2>
+  <label for="weatherLocationInput">地域名</label>
+  <div class="weather-form">
+    <input id="weatherLocationInput" type="text" placeholder="岡山 / 東京 / 福岡">
+    <button type="button" id="weatherFetchButton">天気取得</button>
+  </div>
+  <p id="weatherStatus" class="weather-status" aria-live="polite"></p>
+  <div id="weatherResult" class="weather-result" hidden>
+    <h3 id="weatherLocationName">地域名</h3>
+    <div class="weather-day-grid">
+      <article>
+        <strong>今日の天気</strong>
+        <p id="weatherTodayText"></p>
+      </article>
+      <article>
+        <strong>明日の天気</strong>
+        <p id="weatherTomorrowText"></p>
+      </article>
+    </div>
+    <p id="weatherUpdatedAt" class="weather-updated"></p>
+  </div>
+</section>

@@ -1,0 +1,46 @@
+<section id="writerSection" class="writer-section">
+  <h2>✍️ 文章作成</h2>
+  <label for="writerKindInput">文章種別</label>
+  <select id="writerKindInput" class="writer-select">
+    <option value="お礼">お礼</option>
+    <option value="謝罪">謝罪</option>
+    <option value="営業">営業</option>
+    <option value="アポ依頼">アポ依頼</option>
+    <option value="面談後フォロー">面談後フォロー</option>
+    <option value="自由入力">自由入力</option>
+  </select>
+
+  <label for="writerRecipientInput">相手名</label>
+  <input id="writerRecipientInput" class="writer-input" type="text" placeholder="山田様">
+
+  <label for="writerContentInput">内容</label>
+  <textarea
+    id="writerContentInput"
+    class="writer-textarea"
+    placeholder="本日は打合せありがとうございました"
+  ></textarea>
+
+  <button type="button" id="writerGenerateButton" class="writer-generate-button">
+    生成する
+  </button>
+
+  <button type="button" id="writerSuggestButton" class="writer-suggest-button">
+    秘書に提案してもらう
+  </button>
+
+  <div class="writer-suggestions" id="writerSuggestions" hidden>
+    <h3>おすすめ文章</h3>
+    <div id="writerSuggestionList" class="writer-suggestion-list"></div>
+  </div>
+
+  <div class="writer-result">
+    <div class="writer-result-head">
+      <h3>生成結果</h3>
+      <button type="button" id="writerCopyButton" class="writer-copy-button" disabled>
+        コピー
+      </button>
+    </div>
+    <pre id="writerResultText">文章を生成するとここに表示されます。</pre>
+    <p id="writerStatus" class="writer-status" aria-live="polite"></p>
+  </div>
+</section>

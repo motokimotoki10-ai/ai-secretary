@@ -1,0 +1,64 @@
+<section id="moneySection" class="money-section">
+  <h2>💰 お金管理</h2>
+
+  <div class="money-summary">
+    <article>
+      <span>今月の収入</span>
+      <strong>{{ "{:,}".format(money_summary.income) }}円</strong>
+    </article>
+    <article>
+      <span>今月の支出</span>
+      <strong>{{ "{:,}".format(money_summary.expense) }}円</strong>
+    </article>
+    <article>
+      <span>差額</span>
+      <strong>{{ "{:,}".format(money_summary.balance) }}円</strong>
+    </article>
+  </div>
+
+  <form method="post" action="{{ url_for('save_money_action') }}" class="money-form">
+    <fieldset>
+      <legend>種別</legend>
+      <label>
+        <input type="radio" name="type" value="支出" checked>
+        <span>支出</span>
+      </label>
+      <label>
+        <input type="radio" name="type" value="収入">
+        <span>収入</span>
+      </label>
+    </fieldset>
+
+    <label class="money-field">
+      <span>金額</span>
+      <input type="number" name="amount" min="1" step="1" inputmode="numeric" placeholder="5000" required>
+    </label>
+
+    <label class="money-field">
+      <span>内容</span>
+      <input type="text" name="memo" placeholder="ガソリン">
+    </label>
+
+    <button type="submit" class="money-save-button">保存する</button>
+  </form>
+
+  <div class="money-list">
+    <h3>最新10件</h3>
+    {% if money_records %}
+      {% for record in money_records %}
+      <article class="money-card money-{{ record.type }}">
+        <div>
+          <strong>{{ record.type }}：{{ "{:,}".format(record.amount) }}円</strong>
+          <p>{{ record.memo or "内容未設定" }}</p>
+          <p class="money-date">{{ record.created_at }}</p>
+        </div>
+        <form method="post" action="{{ url_for('delete_money_action', record_id=record.id) }}">
+          <button type="submit" class="task-action delete-action">削除</button>
+        </form>
+      </article>
+      {% endfor %}
+    {% else %}
+      <p class="empty">お金の記録はまだありません。</p>
+    {% endif %}
+  </div>
+</section>
