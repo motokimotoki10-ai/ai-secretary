@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#176b5f">
+    <title>利用者管理 | AI秘書</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body class="theme-{{ settings.design_theme|default('dark-secretary') }}">
+    <main class="app-shell feature-shell admin-shell">
+      <div class="tab-panel-head">
+        <p class="eyebrow">AI秘書 管理</p>
+        <h1>利用者管理</h1>
+        <p>プレゼント用・テスト用の利用キーを管理します。</p>
+      </div>
+
+      <section class="app-info-section admin-panel">
+        <h2>新しい利用キーを追加</h2>
+        <form method="post" action="{{ url_for('admin_add_user') }}" class="admin-key-form">
+          <label>
+            利用キー
+            <input name="license_key" type="text" autocomplete="off" placeholder="例: gift-0614-01" required>
+          </label>
+          <label>
+            利用者メモ
+            <input name="memo" type="text" placeholder="例: プレゼント用 / テスト用">
+          </label>
+          <label>
+            有効期限
+            <input name="expires_on" type="date">
+          </label>
+          <button type="submit" class="primary-action">追加する</button>
+        </form>
+      </section>
+
+      <section class="app-info-section admin-panel">
+        <h2>現在の利用キー</h2>
+        {% if main_license_enabled %}
+          <article class="admin-key-card">
+            <div>
+              <strong>Render設定キー</strong>
+              <p>環境変数で設定中の基本キーです。</p>
+            </div>
+            <span class="admin-status active">有効</span>
+          </article>
+        {% endif %}
+
+        {% if license_keys %}
+          <div class="admin-key-list">
+            {% for item in license_keys %}
+              <article class="admin-key-card {% if not item.is_active or item.is_expired %}is-disabled{% endif %}">
+                <div>
+                  <strong>{{ item.license_key }}</strong>
+                  <p>{{ item.memo or "メモなし" }}</p>
+                  <small>
+                    利用回数 {{ item.use_count }}回 /
+                    最終利用 {{ item.last_used_at or "なし" }} /
+                    期限 {{ item.expires_on or "なし" }}
+                  </small>
+                </div>
+                <div class="admin-key-actions">
+                  {% if item.is_active and not item.is_expired %}
+                    <span class="admin-status active">有効</span>
+                    <form method="post" action="{{ url_for('admin_disable_user', license_id=item.id) }}">
+                      <button type="submit" class="task-action delete-action">停止</button>
+                    </form>
+                  {% elif item.is_expired %}
+                    <span class="admin-status expired">期限切れ</span>
+                  {% else %}
+                    <span class="admin-status disabled">停止中</span>
+                  {% endif %}
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p>追加した利用キーはまだありません。</p>
+        {% endif %}
+      </section>
+
+      <form method="post" action="{{ url_for('admin_logout') }}">
+        <button type="submit" class="feature-back-link">管理画面を閉じる</button>
+      </form>
+    </main>
+  </body>
+</html>

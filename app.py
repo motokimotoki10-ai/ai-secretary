@@ -150,6 +150,7 @@ PUBLIC_ENDPOINTS = {
     "license_status",
     "verify_license",
     "apple_touch_icon",
+    "admin_login",
 }
 
 
@@ -245,10 +246,94 @@ def is_license_approved():
     return session.get("license_approved") is True
 
 
+def is_admin_approved():
+    return session.get("admin_approved") is True
+
+
+def get_admin_key():
+    return os.environ.get("AI_SECRETARY_ADMIN_KEY", "").strip()
+
+
+def normalize_date_text(value):
+    value = str(value or "").strip()
+    if not value:
+        return ""
+    try:
+        return date.fromisoformat(value).isoformat()
+    except ValueError:
+        return ""
+
+
+def is_license_key_expired(expires_on):
+    expires_on = str(expires_on or "").strip()
+    if not expires_on:
+        return False
+    try:
+        return date.fromisoformat(expires_on) < date.today()
+    except ValueError:
+        return True
+
+
+def find_managed_license_key(input_key):
+    init_db()
+    row = get_db().execute(
+        """
+        SELECT *
+        FROM secretary_license_keys
+        WHERE license_key = ?
+        """,
+        (input_key,),
+    ).fetchone()
+    if not row:
+        return None
+    if int(row["is_active"]) != 1:
+        return None
+    if is_license_key_expired(row["expires_on"]):
+        return None
+    return row
+
+
+def mark_license_key_used(license_id):
+    now_text = datetime.now().strftime("%Y-%m-%d %H:%M")
+    db = get_db()
+    db.execute(
+        """
+        UPDATE secretary_license_keys
+        SET use_count = use_count + 1,
+            last_used_at = ?
+        WHERE id = ?
+        """,
+        (now_text, license_id),
+    )
+    db.commit()
+
+
+def license_key_is_valid(input_key):
+    input_key = str(input_key or "").strip()
+    if not input_key:
+        return False
+
+    main_license_key = str(load_settings().get("license_key", "")).strip()
+    if main_license_key and input_key == main_license_key:
+        return True
+
+    managed_license = find_managed_license_key(input_key)
+    if managed_license:
+        mark_license_key_used(managed_license["id"])
+        return True
+
+    return False
+
+
 @app.before_request
 def require_license():
     if request.endpoint in PUBLIC_ENDPOINTS:
         return None
+
+    if request.endpoint and request.endpoint.startswith("admin_"):
+        if is_admin_approved():
+            return None
+        return redirect(url_for("admin_login"))
 
     if is_license_approved():
         return None
@@ -535,6 +620,27 @@ def init_db():
             """
             CREATE INDEX IF NOT EXISTS idx_secretary_money_list
             ON secretary_money(created_at)
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS secretary_license_keys (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                license_key TEXT NOT NULL UNIQUE,
+                memo TEXT NOT NULL DEFAULT '',
+                expires_on TEXT NOT NULL DEFAULT '',
+                is_active INTEGER NOT NULL DEFAULT 1,
+                use_count INTEGER NOT NULL DEFAULT 0,
+                last_used_at TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL,
+                disabled_at TEXT NOT NULL DEFAULT ''
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_secretary_license_keys_status
+            ON secretary_license_keys(is_active, expires_on, created_at)
             """
         )
 
@@ -2523,9 +2629,8 @@ def transcribe_audio_file(file_name):
 def verify_license():
     data = request.get_json(silent=True) or {}
     input_key = str(data.get("license_key", "")).strip()
-    license_key = str(load_settings().get("license_key", "")).strip()
 
-    if input_key and input_key == license_key:
+    if license_key_is_valid(input_key):
         session["license_approved"] = True
         return jsonify({"ok": True, "message": "利用できます。"})
 
@@ -2536,6 +2641,129 @@ def verify_license():
 @app.get("/license/status")
 def license_status():
     return jsonify({"ok": is_license_approved()})
+
+
+def list_license_keys():
+    init_db()
+    rows = get_db().execute(
+        """
+        SELECT *
+        FROM secretary_license_keys
+        ORDER BY is_active DESC, created_at DESC
+        """
+    ).fetchall()
+    return [
+        {
+            **dict(row),
+            "is_expired": is_license_key_expired(row["expires_on"]),
+        }
+        for row in rows
+    ]
+
+
+@app.route("/admin", methods=["GET", "POST"])
+def admin_login():
+    if is_admin_approved():
+        return redirect(url_for("admin_users"))
+
+    message = ""
+    admin_key_ready = bool(get_admin_key())
+    if request.method == "POST":
+        input_key = str(request.form.get("admin_key", "")).strip()
+        admin_key = get_admin_key()
+        if admin_key and input_key == admin_key:
+            session["admin_approved"] = True
+            return redirect(url_for("admin_users"))
+        message = "管理キーが正しくありません。"
+
+    return render_template(
+        "admin_login.html",
+        settings=load_settings(),
+        message=message,
+        admin_key_ready=admin_key_ready,
+    )
+
+
+@app.get("/admin/users")
+def admin_users():
+    return render_template(
+        "admin_users.html",
+        settings=load_settings(),
+        license_keys=list_license_keys(),
+        main_license_enabled=bool(str(load_settings().get("license_key", "")).strip()),
+    )
+
+
+@app.post("/admin/users/add")
+def admin_add_user():
+    license_key = str(request.form.get("license_key", "")).strip()
+    memo = str(request.form.get("memo", "")).strip()
+    expires_on = normalize_date_text(request.form.get("expires_on", ""))
+
+    if not license_key:
+        return redirect(url_for("admin_users"))
+
+    db = get_db()
+    try:
+        db.execute(
+            """
+            INSERT INTO secretary_license_keys (
+                license_key,
+                memo,
+                expires_on,
+                is_active,
+                use_count,
+                last_used_at,
+                created_at,
+                disabled_at
+            )
+            VALUES (?, ?, ?, 1, 0, '', ?, '')
+            """,
+            (
+                license_key,
+                memo,
+                expires_on,
+                datetime.now().strftime("%Y-%m-%d %H:%M"),
+            ),
+        )
+        db.commit()
+    except sqlite3.IntegrityError:
+        db.execute(
+            """
+            UPDATE secretary_license_keys
+            SET memo = ?,
+                expires_on = ?,
+                is_active = 1,
+                disabled_at = ''
+            WHERE license_key = ?
+            """,
+            (memo, expires_on, license_key),
+        )
+        db.commit()
+
+    return redirect(url_for("admin_users"))
+
+
+@app.post("/admin/users/<int:license_id>/disable")
+def admin_disable_user(license_id):
+    db = get_db()
+    db.execute(
+        """
+        UPDATE secretary_license_keys
+        SET is_active = 0,
+            disabled_at = ?
+        WHERE id = ?
+        """,
+        (datetime.now().strftime("%Y-%m-%d %H:%M"), license_id),
+    )
+    db.commit()
+    return redirect(url_for("admin_users"))
+
+
+@app.post("/admin/logout")
+def admin_logout():
+    session.pop("admin_approved", None)
+    return redirect(url_for("admin_login"))
 
 
 @app.route("/", methods=["GET", "POST"])

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#176b5f">
+    <title>管理者ログイン | AI秘書</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body class="theme-{{ settings.design_theme|default('dark-secretary') }}">
+    <main class="app-shell feature-shell admin-shell">
+      <div class="tab-panel-head">
+        <p class="eyebrow">AI秘書 管理</p>
+        <h1>管理者ログイン</h1>
+        <p>利用キーを管理するため、管理キーを入力してください。</p>
+      </div>
+
+      <section class="app-info-section admin-panel">
+        {% if not admin_key_ready %}
+          <p class="notice">Renderの環境変数に管理キーが未設定です。</p>
+        {% endif %}
+        <form method="post" class="license-form admin-form">
+          <label for="adminKey">管理キー</label>
+          <input id="adminKey" name="admin_key" type="password" autocomplete="off" placeholder="管理キーを入力" required>
+          <button type="submit" class="primary-action">管理画面を開く</button>
+        </form>
+        {% if message %}
+          <p class="license-message">{{ message }}</p>
+        {% endif %}
+      </section>
+    </main>
+  </body>
+</html>
