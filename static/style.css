@@ -6276,7 +6276,7 @@ body[class*="theme-"] .recording-file-fallback .save-recording {
 
 .schedule-summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -6381,6 +6381,37 @@ body[class*="theme-"] .recording-file-fallback .save-recording {
   background:
     radial-gradient(circle at 50% 8%, rgba(241, 200, 115, 0.22), transparent 42%),
     rgba(137, 78, 255, 0.16);
+}
+
+.calendar-day.has-fortune {
+  border-color: rgba(241, 200, 115, 0.36);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(241, 200, 115, 0.2), transparent 46%),
+    rgba(255, 255, 255, 0.065);
+}
+
+.calendar-fortune-badge {
+  width: fit-content;
+  padding: 1px 5px;
+  border-radius: 999px;
+  color: #2b1700;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 900;
+  background: linear-gradient(135deg, #fff2bd, #d9a945);
+  box-shadow: 0 0 12px rgba(241, 200, 115, 0.18);
+}
+
+.schedule-fortune-button {
+  width: 100%;
+}
+
+.schedule-fortune-list {
+  margin-top: -2px;
+}
+
+.schedule-fortune-card strong {
+  color: #fff;
 }
 
 .schedule-year-section,
@@ -6537,7 +6568,7 @@ body[class*="theme-"] .recording-file-fallback .save-recording {
   }
 
   .schedule-summary-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .schedule-summary-grid article {

@@ -23,6 +23,7 @@
     phone: document.getElementById("contactPhoneInput"),
     email: document.getElementById("contactEmailInput")
   };
+  let tesseractLoaderPromise = null;
 
   const escapeHtml = (value) =>
     String(value || "")
@@ -106,6 +107,60 @@
         field.value = contact && contact[key] ? contact[key] : "";
       }
     });
+  };
+
+  const loadTesseract = () => {
+    if (window.Tesseract) {
+      return Promise.resolve(window.Tesseract);
+    }
+
+    if (!tesseractLoaderPromise) {
+      tesseractLoaderPromise = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+        script.async = true;
+        script.onload = () => {
+          if (window.Tesseract) {
+            resolve(window.Tesseract);
+          } else {
+            reject(new Error("Tesseract.jsを読み込めませんでした。"));
+          }
+        };
+        script.onerror = () => reject(new Error("Tesseract.jsを読み込めませんでした。"));
+        document.head.appendChild(script);
+      });
+    }
+
+    return tesseractLoaderPromise;
+  };
+
+  const parseOcrText = async (text) => {
+    const response = await fetch("/business-card/parse", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ text })
+    });
+    return response.json();
+  };
+
+  const recognizeOnDevice = async (file) => {
+    status.textContent = "サーバー読み取りが使えないため、この端末で読み取りを試します。少し時間がかかります。";
+    const Tesseract = await loadTesseract();
+    const result = await Tesseract.recognize(file, "jpn+eng", {
+      logger: (progress) => {
+        if (progress.status === "recognizing text" && Number.isFinite(progress.progress)) {
+          const percent = Math.round(progress.progress * 100);
+          status.textContent = `この端末で名刺を読み取り中です。${percent}%`;
+        }
+      }
+    });
+    const text = result && result.data ? String(result.data.text || "").trim() : "";
+    if (!text) {
+      throw new Error("名刺の文字を読み取れませんでした。");
+    }
+    return parseOcrText(text);
   };
 
   const renderOcrResult = (contact) => {
@@ -232,10 +287,18 @@
         renderOcrResult(contact);
         status.textContent = result.message || "読み取り結果を連絡先候補へ入力しました。";
       } else {
-        status.textContent = result.message || "名刺読み取りに失敗しました。手入力で保存できます。";
+        const fallbackResult = await recognizeOnDevice(file);
+        if (fallbackResult.ok) {
+          const contact = fallbackResult.contact || {};
+          fillContactFields(contact);
+          renderOcrResult(contact);
+          status.textContent = "端末側で読み取りました。必要に応じて修正して保存してください。";
+        } else {
+          status.textContent = fallbackResult.message || result.message || "名刺読み取りに失敗しました。手入力で保存できます。";
+        }
       }
     } catch (error) {
-      status.textContent = "名刺読み取りに失敗しました。手入力で保存できます。";
+      status.textContent = `${error.message || "名刺読み取りに失敗しました。"} 手入力で保存できます。`;
     } finally {
       button.disabled = false;
     }

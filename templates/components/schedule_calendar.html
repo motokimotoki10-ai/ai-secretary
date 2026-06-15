@@ -26,6 +26,35 @@
       <span>今月の予定</span>
       <strong>{{ schedule_dashboard.month_schedules|length }}件</strong>
     </article>
+    <article>
+      <span>縁起がいい日</span>
+      <strong>{{ schedule_dashboard.fortune_days|length }}日</strong>
+    </article>
+  </div>
+
+  <button
+    type="button"
+    class="fortune-month-button schedule-fortune-button"
+    data-fortune-toggle
+    data-open-label="縁起がいい日を見る"
+    data-close-label="縁起がいい日を閉じる"
+  >
+    縁起がいい日を見る
+  </button>
+  <div class="fortune-month-list schedule-fortune-list" data-fortune-list hidden>
+    {% if schedule_dashboard.fortune_days %}
+      {% for day in schedule_dashboard.fortune_days %}
+      <article class="fortune-month-card schedule-fortune-card">
+        <strong>{{ day.month_day }}　{{ day.rokuyo }}</strong>
+        {% if day.lucky_days %}
+        <p>{{ day.lucky_days|join(" / ") }}</p>
+        {% endif %}
+        <p>{{ day.description }}</p>
+      </article>
+      {% endfor %}
+    {% else %}
+      <p class="empty">この月の縁起がいい日はまだ登録されていません。</p>
+    {% endif %}
   </div>
 
   <div class="month-calendar" role="table" aria-label="{{ schedule_dashboard.month_label }}">
@@ -39,14 +68,20 @@
       {% for day in week %}
         {% if day %}
         {% if day.schedules %}
-        <a class="calendar-day{% if day.is_today %} is-today{% endif %} has-schedule{% if day.is_past %} is-past{% endif %}" role="cell" href="#schedule-day-{{ day.date }}">
+        <a class="calendar-day{% if day.is_today %} is-today{% endif %} has-schedule{% if day.fortune.is_lucky %} has-fortune{% endif %}{% if day.is_past %} is-past{% endif %}" role="cell" href="#schedule-day-{{ day.date }}">
           <strong>{{ day.day }}</strong>
+          {% if day.fortune.is_lucky %}
+          <em class="calendar-fortune-badge">{{ day.fortune.lucky_days[0] if day.fortune.lucky_days else day.fortune.rokuyo }}</em>
+          {% endif %}
           <span>{{ day.schedules|length }}件</span>
           <small>{{ day.schedules[0].title }}</small>
         </a>
         {% else %}
-        <article class="calendar-day{% if day.is_today %} is-today{% endif %}{% if day.is_past %} is-past{% endif %}" role="cell">
+        <article class="calendar-day{% if day.is_today %} is-today{% endif %}{% if day.fortune.is_lucky %} has-fortune{% endif %}{% if day.is_past %} is-past{% endif %}" role="cell">
           <strong>{{ day.day }}</strong>
+          {% if day.fortune.is_lucky %}
+          <em class="calendar-fortune-badge">{{ day.fortune.lucky_days[0] if day.fortune.lucky_days else day.fortune.rokuyo }}</em>
+          {% endif %}
         </article>
         {% endif %}
         {% else %}

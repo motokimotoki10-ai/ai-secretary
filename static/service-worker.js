@@ -1,4 +1,4 @@
-const CACHE_NAME = "ai-secretary-v60-auto-license-20260615";
+const CACHE_NAME = "ai-secretary-v60-fortune-ocr-20260615";
 const STATIC_ASSETS = [
   "/",
   "/static/style.css",

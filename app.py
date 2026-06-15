@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import calendar
 import json
@@ -33,6 +33,7 @@ UPLOAD_AUDIO_DIR = BASE_DIR / "uploads" / "audio"
 RUNTIME_BIN_DIR = BASE_DIR / "_runtime" / "bin"
 WHISPER_MODEL_NAME = "tiny"
 GOOGLE_CALENDAR_SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
+JST = timezone(timedelta(hours=9))
 COMPANY_KEYWORDS = (
     "株式会社",
     "有限会社",
@@ -1862,6 +1863,8 @@ def build_schedule_dashboard(schedules, selected_month=None, today=None):
     for day in range(1, month_days + 1):
         current_date = month_start.replace(day=day)
         day_schedules = by_date.get(current_date, [])
+        fortune = build_fortune_day(current_date)
+        fortune["is_lucky"] = bool(fortune["lucky_days"] or fortune["rokuyo"] == "大安")
         cells.append(
             {
                 "date": current_date,
@@ -1869,6 +1872,7 @@ def build_schedule_dashboard(schedules, selected_month=None, today=None):
                 "is_today": current_date == base_date,
                 "is_past": current_date < base_date,
                 "schedules": day_schedules,
+                "fortune": fortune,
             }
         )
     while len(cells) % 7:
@@ -1927,6 +1931,7 @@ def build_schedule_dashboard(schedules, selected_month=None, today=None):
         "week_schedules": week_schedules,
         "month_schedules": month_schedules,
         "month_groups": month_groups,
+        "fortune_days": build_month_fortune(month_start),
         "year_months": year_months,
         "unscheduled": unscheduled,
     }
@@ -2595,7 +2600,7 @@ def run_business_card_ocr(image_file):
 
 
 def get_current_datetime_display():
-    now = datetime.now()
+    now = datetime.now(JST)
     weekday_labels = ["月", "火", "水", "木", "金", "土", "日"]
     hour = now.hour
     if 5 <= hour < 11:
@@ -3263,6 +3268,24 @@ def business_card_ocr_action():
         return jsonify({"ok": False, "message": str(error)}), 400
     except RuntimeError as error:
         return jsonify({"ok": False, "message": str(error)}), 503
+
+    contact = guess_business_card_contact(text)
+    return jsonify(
+        {
+            "ok": True,
+            "message": "読み取り結果を連絡先候補へ入力しました。必要に応じて修正して保存してください。",
+            "text": text,
+            "contact": contact,
+        }
+    )
+
+
+@app.post("/business-card/parse")
+def business_card_parse_action():
+    data = request.get_json(silent=True) or {}
+    text = str(data.get("text", "")).strip()
+    if not text:
+        return jsonify({"ok": False, "message": "読み取った文字がありません。"}), 400
 
     contact = guess_business_card_contact(text)
     return jsonify(
