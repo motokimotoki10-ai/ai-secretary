@@ -12,6 +12,12 @@
     return;
   }
 
+  const savedLicenseKey = () => (localStorage.getItem(SAVED_LICENSE_KEY) || "").trim();
+
+  const isLicenseOnlyPage = () =>
+    document.body.dataset.page === "license" ||
+    window.location.pathname.includes("license");
+
   const unlock = () => {
     gate.hidden = true;
     document.body.classList.remove("is-locked");
@@ -20,10 +26,66 @@
   const lock = () => {
     gate.hidden = false;
     document.body.classList.add("is-locked");
-    input.focus();
+    window.setTimeout(() => input.focus(), 80);
   };
 
-  lock();
+  const clearSavedLicense = () => {
+    localStorage.removeItem(APPROVED_KEY);
+    localStorage.removeItem(SAVED_LICENSE_KEY);
+  };
+
+  const saveLicense = (licenseKey) => {
+    localStorage.setItem(APPROVED_KEY, "true");
+    localStorage.setItem(SAVED_LICENSE_KEY, licenseKey);
+  };
+
+  const verifyLicense = async (licenseKey, options = {}) => {
+    const { silent = false } = options;
+
+    if (!licenseKey) {
+      if (!silent) {
+        message.textContent = "利用キーを入力してください。";
+      }
+      return false;
+    }
+
+    if (!silent) {
+      message.textContent = "利用キーを確認しています。";
+    }
+
+    try {
+      const response = await fetch("/license/verify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({ license_key: licenseKey })
+      });
+      const result = await response.json();
+
+      if (response.ok && result.ok) {
+        saveLicense(licenseKey);
+        message.textContent = "確認できました。この端末では次回から自動で開きます。";
+        unlock();
+        if (isLicenseOnlyPage()) {
+          window.location.href = "/";
+        }
+        return true;
+      }
+
+      clearSavedLicense();
+      if (!silent) {
+        message.textContent = result.message || "利用キーが正しくありません。";
+      }
+      return false;
+    } catch (error) {
+      if (!silent) {
+        message.textContent = "利用キーを確認できませんでした。通信状態を確認してください。";
+      }
+      return false;
+    }
+  };
 
   const checkServerApproval = async () => {
     try {
@@ -39,53 +101,39 @@
         return true;
       }
     } catch (error) {
-      // サーバー確認に失敗した場合は、利用キー画面を表示したままにします。
+      // オフラインや一時的な通信失敗時は、入力画面を表示したままにします。
     }
 
     localStorage.removeItem(APPROVED_KEY);
-    localStorage.removeItem(SAVED_LICENSE_KEY);
     return false;
   };
 
-  checkServerApproval();
+  const savedKey = savedLicenseKey();
+  if (savedKey) {
+    input.value = savedKey;
+  }
+
+  lock();
+
+  checkServerApproval().then(async (serverApproved) => {
+    if (serverApproved) {
+      return;
+    }
+
+    const key = savedLicenseKey();
+    if (key) {
+      message.textContent = "保存済みの利用キーを確認しています。";
+      const autoApproved = await verifyLicense(key, { silent: true });
+      if (!autoApproved) {
+        lock();
+        message.textContent = "保存済みの利用キーを確認できませんでした。もう一度入力してください。";
+      }
+    }
+  });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const licenseKey = input.value.trim();
-
-    if (!licenseKey) {
-      message.textContent = "利用キーを入力してください。";
-      return;
-    }
-
-    message.textContent = "利用キーを確認中です。";
-
-    try {
-      const response = await fetch("/license/verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ license_key: licenseKey })
-      });
-      const result = await response.json();
-
-      if (response.ok && result.ok) {
-        localStorage.setItem(APPROVED_KEY, "true");
-        localStorage.setItem(SAVED_LICENSE_KEY, licenseKey);
-        message.textContent = "利用できます。";
-        unlock();
-        if (document.title.includes("利用キー確認")) {
-          window.location.href = "/";
-        }
-        return;
-      }
-
-      localStorage.removeItem(APPROVED_KEY);
-      localStorage.removeItem(SAVED_LICENSE_KEY);
-      message.textContent = result.message || "利用キーが正しくありません";
-    } catch (error) {
-      message.textContent = "利用キーを確認できませんでした。";
-    }
+    await verifyLicense(licenseKey);
   });
 })();
