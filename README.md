@@ -484,7 +484,16 @@ Environment Variables に以下を設定します。
 
 ```text
 AI_SECRETARY_LICENSE_KEY=相手に伝える利用キー
+AI_SECRETARY_ADMIN_KEY=管理者だけが知る管理キー
 ```
+
+利用者管理の追加キーを再デプロイ後も残したい場合は、RenderのPostgreSQLを用意し、以下も設定します。
+
+```text
+DATABASE_URL=PostgreSQLの接続URL
+```
+
+`DATABASE_URL` がある場合はPostgreSQL、ない場合はこれまで通り `secretary.db` のSQLiteで動きます。
 
 公開された `https://...onrender.com` のURLをiPhoneに送れば、Safariで開けます。
 Safariの共有ボタンから「ホーム画面に追加」を選ぶと、アプリのように起動できます。

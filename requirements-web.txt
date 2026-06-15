@@ -2,3 +2,4 @@ Flask>=3.1,<4
 gunicorn>=22,<24
 Pillow
 pytesseract
+psycopg2-binary>=2.9,<3

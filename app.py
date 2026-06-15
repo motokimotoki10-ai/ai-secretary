@@ -13,9 +13,19 @@ from pathlib import Path
 
 from flask import Flask, Response, g, jsonify, redirect, render_template, request, send_from_directory, session, url_for
 
+try:
+    import psycopg2
+    from psycopg2 import errors as pg_errors
+    from psycopg2.extras import RealDictCursor
+except ImportError:
+    psycopg2 = None
+    pg_errors = None
+    RealDictCursor = None
+
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "secretary.db"
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 SETTINGS_PATH = BASE_DIR / "settings.json"
 GOOGLE_CLIENT_SECRET_PATH = BASE_DIR / "google_client_secret.json"
 GOOGLE_TOKEN_PATH = BASE_DIR / "google_calendar_token.json"
@@ -521,10 +531,71 @@ def fetch_google_calendar_events(max_results=5):
     return events
 
 
+def is_postgres_enabled():
+    return bool(DATABASE_URL)
+
+
+def convert_sql_for_postgres(sql):
+    converted = sql.replace("?", "%s")
+    if re.match(r"^\s*INSERT\s+INTO\s+secretary_", converted, re.IGNORECASE) and "RETURNING" not in converted.upper():
+        converted = converted.rstrip().rstrip(";") + " RETURNING id"
+    return converted
+
+
+class PostgresCursor:
+    def __init__(self, cursor, lastrowid=None):
+        self.cursor = cursor
+        self.lastrowid = lastrowid
+
+    def fetchone(self):
+        return self.cursor.fetchone()
+
+    def fetchall(self):
+        return self.cursor.fetchall()
+
+
+class PostgresConnection:
+    def __init__(self, connection):
+        self.connection = connection
+
+    def execute(self, sql, params=()):
+        cursor = self.connection.cursor(cursor_factory=RealDictCursor)
+        converted_sql = convert_sql_for_postgres(sql)
+        cursor.execute(converted_sql, params or ())
+        lastrowid = None
+        if " RETURNING ID" in converted_sql.upper():
+            returned = cursor.fetchone()
+            if returned:
+                lastrowid = returned["id"]
+        return PostgresCursor(cursor, lastrowid)
+
+    def commit(self):
+        self.connection.commit()
+
+    def rollback(self):
+        self.connection.rollback()
+
+    def close(self):
+        self.connection.close()
+
+
+def get_integrity_error_classes():
+    errors = [sqlite3.IntegrityError]
+    if pg_errors is not None:
+        errors.append(pg_errors.UniqueViolation)
+    return tuple(errors)
+
+
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect(DB_PATH)
-        g.db.row_factory = sqlite3.Row
+        if is_postgres_enabled():
+            if psycopg2 is None:
+                raise RuntimeError("PostgreSQLを使うには psycopg2-binary が必要です。")
+            connection = psycopg2.connect(DATABASE_URL)
+            g.db = PostgresConnection(connection)
+        else:
+            g.db = sqlite3.connect(DB_PATH)
+            g.db.row_factory = sqlite3.Row
     return g.db
 
 
@@ -535,114 +606,99 @@ def close_db(error=None):
         db.close()
 
 
+def get_schema_statements():
+    id_definition = "SERIAL PRIMARY KEY" if is_postgres_enabled() else "INTEGER PRIMARY KEY AUTOINCREMENT"
+    return [
+        f"""
+        CREATE TABLE IF NOT EXISTS secretary_tasks (
+            id {id_definition},
+            created_at TEXT NOT NULL,
+            title TEXT NOT NULL,
+            priority TEXT NOT NULL,
+            deadline TEXT NOT NULL,
+            status TEXT NOT NULL,
+            source_text TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_secretary_tasks_list
+        ON secretary_tasks(status, priority, deadline, created_at)
+        """,
+        f"""
+        CREATE TABLE IF NOT EXISTS secretary_schedule (
+            id {id_definition},
+            title TEXT NOT NULL,
+            scheduled_at TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_secretary_schedule_list
+        ON secretary_schedule(scheduled_at, created_at)
+        """,
+        f"""
+        CREATE TABLE IF NOT EXISTS secretary_transcripts (
+            id {id_definition},
+            content TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_secretary_transcripts_list
+        ON secretary_transcripts(created_at)
+        """,
+        f"""
+        CREATE TABLE IF NOT EXISTS secretary_contacts (
+            id {id_definition},
+            name TEXT NOT NULL,
+            company TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            email TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_secretary_contacts_list
+        ON secretary_contacts(created_at)
+        """,
+        f"""
+        CREATE TABLE IF NOT EXISTS secretary_money (
+            id {id_definition},
+            type TEXT NOT NULL,
+            amount INTEGER NOT NULL,
+            memo TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_secretary_money_list
+        ON secretary_money(created_at)
+        """,
+        f"""
+        CREATE TABLE IF NOT EXISTS secretary_license_keys (
+            id {id_definition},
+            license_key TEXT NOT NULL UNIQUE,
+            memo TEXT NOT NULL DEFAULT '',
+            expires_on TEXT NOT NULL DEFAULT '',
+            is_active INTEGER NOT NULL DEFAULT 1,
+            use_count INTEGER NOT NULL DEFAULT 0,
+            last_used_at TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL,
+            disabled_at TEXT NOT NULL DEFAULT ''
+        )
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_secretary_license_keys_status
+        ON secretary_license_keys(is_active, expires_on, created_at)
+        """,
+    ]
+
+
 def init_db():
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS secretary_tasks (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                created_at TEXT NOT NULL,
-                title TEXT NOT NULL,
-                priority TEXT NOT NULL,
-                deadline TEXT NOT NULL,
-                status TEXT NOT NULL,
-                source_text TEXT NOT NULL
-            )
-            """
-        )
-        conn.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_secretary_tasks_list
-            ON secretary_tasks(status, priority, deadline, created_at)
-            """
-        )
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS secretary_schedule (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                scheduled_at TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            )
-            """
-        )
-        conn.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_secretary_schedule_list
-            ON secretary_schedule(scheduled_at, created_at)
-            """
-        )
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS secretary_transcripts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                content TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            )
-            """
-        )
-        conn.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_secretary_transcripts_list
-            ON secretary_transcripts(created_at)
-            """
-        )
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS secretary_contacts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                company TEXT NOT NULL,
-                phone TEXT NOT NULL,
-                email TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            )
-            """
-        )
-        conn.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_secretary_contacts_list
-            ON secretary_contacts(created_at)
-            """
-        )
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS secretary_money (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                type TEXT NOT NULL,
-                amount INTEGER NOT NULL,
-                memo TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            )
-            """
-        )
-        conn.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_secretary_money_list
-            ON secretary_money(created_at)
-            """
-        )
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS secretary_license_keys (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                license_key TEXT NOT NULL UNIQUE,
-                memo TEXT NOT NULL DEFAULT '',
-                expires_on TEXT NOT NULL DEFAULT '',
-                is_active INTEGER NOT NULL DEFAULT 1,
-                use_count INTEGER NOT NULL DEFAULT 0,
-                last_used_at TEXT NOT NULL DEFAULT '',
-                created_at TEXT NOT NULL,
-                disabled_at TEXT NOT NULL DEFAULT ''
-            )
-            """
-        )
-        conn.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_secretary_license_keys_status
-            ON secretary_license_keys(is_active, expires_on, created_at)
-            """
-        )
+    db = get_db()
+    for statement in get_schema_statements():
+        db.execute(statement)
+    db.commit()
 
 
 def next_weekday(base_date, weekday):
@@ -2727,7 +2783,8 @@ def admin_add_user():
             ),
         )
         db.commit()
-    except sqlite3.IntegrityError:
+    except get_integrity_error_classes():
+        db.rollback()
         db.execute(
             """
             UPDATE secretary_license_keys
@@ -3544,5 +3601,6 @@ def save_conversation_schedules():
 
 
 if __name__ == "__main__":
-    init_db()
+    with app.app_context():
+        init_db()
     app.run(host="0.0.0.0", port=5000, debug=False)

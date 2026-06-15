@@ -4,6 +4,7 @@ openai-whisper
 imageio-ffmpeg
 pytesseract
 Pillow
+psycopg2-binary>=2.9,<3
 google-api-python-client
 google-auth
 google-auth-oauthlib

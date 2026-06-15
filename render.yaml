@@ -10,3 +10,7 @@ services:
         generateValue: true
       - key: AI_SECRETARY_LICENSE_KEY
         sync: false
+      - key: AI_SECRETARY_ADMIN_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
