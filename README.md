@@ -484,6 +484,7 @@ Environment Variables に以下を設定します。
 
 ```text
 AI_SECRETARY_LICENSE_KEY=相手に伝える利用キー
+AI_SECRETARY_EXTRA_LICENSE_KEYS=追加で許可する利用キー（複数ある場合はカンマ区切り）
 AI_SECRETARY_ADMIN_KEY=管理者だけが知る管理キー
 ```
 

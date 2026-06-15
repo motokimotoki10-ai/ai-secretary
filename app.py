@@ -264,6 +264,21 @@ def get_admin_key():
     return os.environ.get("AI_SECRETARY_ADMIN_KEY", "").strip()
 
 
+def split_license_keys(value):
+    keys = []
+    for item in re.split(r"[\n,]", str(value or "")):
+        clean_item = item.strip()
+        if clean_item:
+            keys.append(clean_item)
+    return keys
+
+
+def get_environment_license_keys():
+    keys = split_license_keys(os.environ.get("AI_SECRETARY_LICENSE_KEY", ""))
+    keys.extend(split_license_keys(os.environ.get("AI_SECRETARY_EXTRA_LICENSE_KEYS", "")))
+    return list(dict.fromkeys(keys))
+
+
 def normalize_date_text(value):
     value = str(value or "").strip()
     if not value:
@@ -322,6 +337,10 @@ def license_key_is_valid(input_key):
     input_key = str(input_key or "").strip()
     if not input_key:
         return False
+
+    environment_keys = get_environment_license_keys()
+    if input_key in environment_keys:
+        return True
 
     main_license_key = str(load_settings().get("license_key", "")).strip()
     if main_license_key and input_key == main_license_key:
